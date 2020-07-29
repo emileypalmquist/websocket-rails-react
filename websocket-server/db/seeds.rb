@@ -2,7 +2,7 @@ Message.destroy_all
 User.destroy_all
 
 em = User.create(name: "Emiley", username: "emileymarie", password: "helloworld", password_confirmation: "helloworld", email: "emiley@fakemail.com")
-co = User.create(name: "Conner", username: "connermarie", password: "helloworld", password_confirmation: "helloworld", email: "conner@fakemail.com")
+co = User.create(name: "Conner", username: "conner", password: "helloworld", password_confirmation: "helloworld", email: "conner@fakemail.com")
 ca = User.create(name: "Carisa", username: "carisamarie", password: "helloworld", password_confirmation: "helloworld", email: "carisa@fakemail.com")
 ka = User.create(name: "Kailey", username: "kaileymarie", password: "helloworld", password_confirmation: "helloworld", email: "kailey@fakemail.com")
 

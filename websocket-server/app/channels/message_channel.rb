@@ -1,13 +1,15 @@
 class MessageChannel < ApplicationCable::Channel
   def subscribed
-    stream_from "message_channel"
+    # only authenticated users will have a stream opened
+    stream_for current_user
 
-    ActionCable.server.broadcast("message_channel", type: "messages", message_history: Message.all)
+    # broadcast all of the current_user's/authenticated user's messages 
+    MessageChannel.broadcast_to(current_user, type: "messages", messages: current_user.messages)
   end
 
-  def send_message(data)
-    new_message = Message.create(content: data["content"])
-
-    ActionCable.server.broadcast("message_channel", type: "new_message", message: new_message)
+  def unsubscribed
+    # clean up/stop streams for current_user
+    stop_all_streams
   end
+
 end

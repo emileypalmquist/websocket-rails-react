@@ -24,4 +24,8 @@ class User < ApplicationRecord
     Message.where("sender_id = ? OR receiver_id = ?", self.id, self.id).order(created_at: :asc)
   end
 
+  def self.others(current_user)
+    User.where("id != ?", current_user)
+  end
+
 end

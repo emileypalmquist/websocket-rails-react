@@ -1,79 +1,85 @@
 import React, { Component } from 'react';
+import { BrowserRouter as Router, Route, Switch, Link, Redirect } from 'react-router-dom'
+import Login from './components/Login'
+import Signup from './components/Signup'
+import Chat from './components/Chat'
 import './App.css';
-
-
-let socketClient = new WebSocket("ws://localhost:3000/cable");
 
  class App extends Component {
   state = {
-    messages: [],
-    content: ""
+    currentUser: null
   }
-
 
   componentDidMount() {
-    //create new websocket connection
-    socketClient.onopen = (e) => {
-      let message = {
-        command: "subscribe",
-        identifier: JSON.stringify({ channel: "MessageChannel"})
-      }
-
-      socketClient.send(JSON.stringify(message));
-    }
-
-    socketClient.onmessage = (e) => {
-      const serverResponse = JSON.parse(e.data)
-
-      if (serverResponse.type === "ping") return;
-
-      const data = serverResponse.message
-      if (data && data.type === "messages") {
-        this.setState({
-          messages: data.message_history
-        })
-      } 
-      
-      if (data && data.type === "new_message") {
-        this.setState(prevState => ({
-          ...prevState,
-          messages: [...prevState.messages, data.message]
-        }))
-      }
-    }
+    this.reAuth()
   }
 
 
-  createMessage = (e) => {
-    e.preventDefault()
-
-    const message = {
-      command: "message",
-      identifier: JSON.stringify({ channel: "MessageChannel"}),
-      data: JSON.stringify({ action: "send_message", content: this.state.content})
+  reAuth = () => {
+    if (localStorage.getItem('jwt')){
+      return fetch('http://localhost:3000/reauth', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('jwt')}`,
+            'Accept': 'application/json'
+        }
+      })
+      .then(resp => resp.json())
+      .then(data => {
+        this.setUser(data.user)
+      })
+      .catch(console.log())
     }
+  }
 
-    socketClient.send(JSON.stringify(message))
+  setUser = (user) => {
     this.setState({
-      content: ""
+      currentUser: user
     })
   }
 
+  handleSignOut = () => {
+    this.setState({
+      currentUser: null
+    })
+    localStorage.clear()
+  }
+
   render() {
-    const {messages, content} = this.state
+    const {currentUser} = this.state;
+    
     return (
       <div className="App">
-        {messages.map(m => <h4 key={m.id}>{m.content}</h4>)}
-        <form action="" onSubmit={this.createMessage} >
-          <label htmlFor="content" />
-          <input 
-            type="text" 
-            name="content" 
-            onChange={(e) => this.setState({content: e.target.value})} 
-            value={content}
-          />
-          <input type="submit" value="Send"/>
-        </form>
+        <Router>
+          <Switch>
+            <Route
+              exact
+              path="/"
+              render={() => {
+                  return (
+                    localStorage.getItem('jwt') ?
+                    <Redirect to="/chat" /> :
+                    <Redirect to="/login" /> 
+                  )
+                }}
+            />
+            <Route path='/login' render={(props) => <Login {...props} setUser={this.setUser}/>} />
+            <Route path='/signup' render={(props) => <Signup {...props} setUser={this.setUser} />} />
+
+            { currentUser !== null ?
+            <>
+              <Route path='/chat' render={() => <Chat currentUser={currentUser} /> } />
+              <Link to='/login'><button onClick={this.handleSignOut}>Sign Out</button></Link>
+            </>
+            :
+            <>
+              <h1>Must Login To View this page</h1>
+            </>
+            }
+            
+          </Switch>
+        </Router>
       </div>
     )
   }

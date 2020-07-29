@@ -2,7 +2,7 @@ class UsersController < ApplicationController
   skip_before_action :authorized, only: [:create]
 
   def index
-    users = User.all 
+    users = User.others(current_user.id) 
     render json: users
   end
 
@@ -16,4 +16,9 @@ class UsersController < ApplicationController
     end
   end
 
+  private
+ 
+  def user_params
+    params.require(:user).permit(:name, :username, :password, :password_confirmation, :email)
+  end
 end
