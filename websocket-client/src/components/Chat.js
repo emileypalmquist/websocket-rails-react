@@ -19,7 +19,6 @@ class Chat extends Component {
       }
     }).then(resp => resp.json())
     .then(users => {
-      console.log(users)
       this.setState({
         users: users
       })
